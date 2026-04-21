@@ -40,7 +40,12 @@ export const initialState: State = {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "ADD_ORDER": {
-      const order: Order = { id: state.nextOrderId, type: action.orderType };
+      const order: Order = {
+        id: state.nextOrderId,
+        type: action.orderType,
+        createdAt: new Date(),
+        completedAt: null,
+      };
       return assignIdleBots({
         ...state,
         pendingOrders: insertByPriority(state.pendingOrders, order),
@@ -69,7 +74,10 @@ export function reducer(state: State, action: Action): State {
       if (!bot?.order) return state;
       return assignIdleBots({
         ...state,
-        completeOrders: [...state.completeOrders, bot.order],
+        completeOrders: [
+          ...state.completeOrders,
+          { ...bot.order, completedAt: new Date() },
+        ],
         bots: state.bots.map((b) =>
           b.id === action.botId
             ? { ...b, status: "IDLE" as const, order: null }

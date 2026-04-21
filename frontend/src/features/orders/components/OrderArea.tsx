@@ -4,6 +4,10 @@ import type { Order } from "../types";
 
 const VIP_BADGE_CLASS = "bg-amber-500 text-white";
 
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
 interface OrderAreaProps {
   title: string;
   orders: Order[];
@@ -43,7 +47,13 @@ export function OrderArea({
             data-testid={`${orderTestIdPrefix}-${order.id}`}
           >
             <CardContent className="flex items-center justify-between py-0">
-              <span className="font-medium">Order #{order.id}</span>
+              <div>
+                <span className="font-medium">Order #{order.id}</span>
+                <span className="ml-2 text-xs text-muted-foreground tabular-nums">
+                  {formatTime(order.createdAt)}
+                  {order.completedAt && ` → ${formatTime(order.completedAt)}`}
+                </span>
+              </div>
               <Badge
                 variant={order.type === "VIP" ? "default" : "outline"}
                 className={order.type === "VIP" ? VIP_BADGE_CLASS : ""}

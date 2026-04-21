@@ -3,6 +3,8 @@ export type OrderType = "VIP" | "NORMAL";
 export interface Order {
   id: number;
   type: OrderType;
+  createdAt: Date;
+  completedAt: Date | null;
 }
 
 export interface Bot {
