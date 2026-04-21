@@ -294,3 +294,32 @@ test("idle bot picks up order returned from removed bot", async ({ page }) => {
   await expect(page.getByTestId("pending-order-2")).toBeVisible();
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
 });
+
+test("removing newest processing bot redistributes order to idle older bot", async ({ page }) => {
+  // Add 1 order, 2 bots — bot#1 picks up order, bot#2 idle
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("add-bot").click();
+  await page.getByTestId("add-bot").click();
+
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-2")).toContainText("Idle");
+
+  // Add order#2 so bot#2 picks it up
+  await page.getByTestId("new-normal-order").click();
+  await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
+
+  // Wait 5s so bot#1 is halfway done
+  await page.waitForTimeout(5000);
+
+  // Remove bot#2 (newest, processing order#2) — order#2 returns to pending
+  // Bot#1 is still processing order#1, no idle bot available
+  await page.getByTestId("remove-bot").click();
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+
+  // Wait for bot#1 to finish order#1 (~5s remaining)
+  await page.waitForTimeout(5500);
+
+  // Bot#1 should complete order#1 and auto-pick order#2
+  await expect(page.getByTestId("complete-order-1")).toBeVisible();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
+});
