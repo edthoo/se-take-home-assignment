@@ -16,8 +16,8 @@ export function OrderController() {
       </div>
 
       <div className="grid grid-cols-2 grid-rows-2 gap-4 h-[calc(100vh-160px)]">
-        <div className="rounded-lg border p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 overflow-y-auto">
+          <h2 className="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-3">
             Orders
           </h2>
           <OrderButtons
@@ -25,8 +25,8 @@ export function OrderController() {
             onNewVipOrder={() => addOrder("VIP")}
           />
         </div>
-        <div className="rounded-lg border p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-4 overflow-y-auto">
+          <h2 className="text-sm font-semibold text-purple-700 uppercase tracking-wide mb-3">
             Bots
           </h2>
           <BotControls
