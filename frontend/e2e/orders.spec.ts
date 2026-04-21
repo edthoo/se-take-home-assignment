@@ -424,3 +424,38 @@ test("returned VIP order placed before normals", async ({ page }) => {
   await expect(pending.nth(1)).toContainText("Order #1");
   await expect(pending.nth(2)).toContainText("Order #2");
 });
+
+test("load test: 50 orders with 5 bots", async ({ page }) => {
+  // Add 50 orders (mix of VIP and normal)
+  for (let i = 0; i < 50; i++) {
+    if (i % 5 === 0) {
+      await page.getByTestId("new-vip-order").click();
+    } else {
+      await page.getByTestId("new-normal-order").click();
+    }
+  }
+
+  // Verify all orders are in pending
+  const pending = page.getByTestId("pending-area").locator("[data-testid^='pending-order-']");
+  await expect(pending).toHaveCount(50);
+
+  // VIPs should be first (10 VIPs)
+  for (let i = 0; i < 10; i++) {
+    await expect(pending.nth(i)).toContainText("VIP");
+  }
+
+  // Add 5 bots — should pick up first 5 orders
+  for (let i = 0; i < 5; i++) {
+    await page.getByTestId("add-bot").click();
+  }
+
+  await expect(pending).toHaveCount(45);
+
+  // Remove all 5 bots rapidly
+  for (let i = 0; i < 5; i++) {
+    await page.getByTestId("remove-bot").click();
+  }
+
+  // All 50 orders should be back in pending
+  await expect(pending).toHaveCount(50);
+});
