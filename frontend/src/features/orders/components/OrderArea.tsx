@@ -68,14 +68,14 @@ export function OrderArea({
   headerClass,
 }: OrderAreaProps) {
   return (
-    <div className={`rounded-lg border p-4 min-h-[200px] ${accentClass}`}>
-      <h2 className={`mb-3 text-sm font-semibold uppercase tracking-wide ${headerClass}`}>
+    <div className={`rounded-lg border p-4 min-h-0 flex flex-col ${accentClass}`}>
+      <h2 className={`mb-3 text-sm font-semibold uppercase tracking-wide shrink-0 ${headerClass}`}>
         {title}{" "}
         <span className="inline-flex items-center justify-center rounded-full bg-white/80 px-2 py-0.5 text-xs font-medium tabular-nums">
           {orders.length}
         </span>
       </h2>
-      <div className="space-y-2" data-testid={testId}>
+      <div className="space-y-2 overflow-y-auto min-h-0 flex-1" data-testid={testId}>
         {orders.length === 0 && (
           <p className="text-sm text-muted-foreground italic">{emptyMessage}</p>
         )}

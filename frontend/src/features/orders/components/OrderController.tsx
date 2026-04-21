@@ -7,7 +7,7 @@ export function OrderController() {
   const { state, addOrder, addBot, removeBot } = useOrderController();
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-6 space-y-6">
+    <div className="mx-auto w-full max-w-3xl p-6 space-y-6 h-screen flex flex-col">
       <div className="rounded-xl bg-red-600 px-6 py-4 text-white">
         <h1 className="text-2xl font-bold tracking-tight">
           🍔 McDonald's Order Controller
@@ -37,7 +37,7 @@ export function OrderController() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 min-h-0 flex-1">
         <OrderArea
           title="PENDING"
           orders={state.pendingOrders}
