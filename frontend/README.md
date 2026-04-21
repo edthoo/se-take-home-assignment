@@ -1,73 +1,76 @@
-# React + TypeScript + Vite
+# McDonald's Order Controller
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A frontend prototype for an automated order management system with cooking bots.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS v4 + shadcn/ui
+- Playwright (e2e tests)
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun install
+bun run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open http://localhost:5173
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## How It Works
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **New Normal Order** — adds order to the pending queue
+- **New VIP Order** — adds order to pending, prioritized ahead of all normal orders but behind existing VIP orders
+- **+ Bot** — creates a cooking bot that immediately picks up the next pending order and processes it in 10 seconds
+- **- Bot** — removes the newest bot. If it was processing an order, that order returns to its correct position in the pending queue
+
+### Order Priority
+
+Orders maintain their position by type (VIP before Normal) and by creation order (lower ID first) within each group. When a bot is removed mid-processing, its order is re-inserted at the correct position — not appended to the end.
+
+### Bot Behavior
+
+- Each bot processes one order at a time (10 seconds per order)
+- Idle bots automatically pick up new orders as they arrive
+- When a bot completes an order, it immediately picks up the next pending order if available
+- Bots are always removed newest-first (LIFO)
+- Bot IDs are reused when bots are removed and re-added
+
+## Running Tests
+
+```bash
+bun run test:e2e
 ```
+
+24 e2e tests covering:
+- Order creation and priority queue ordering
+- Bot processing, idle state, and auto-pickup
+- Bot removal with order return and redistribution
+- VIP/Normal priority edge cases
+- Rapid add/remove stress testing
+- Load test with 50 orders and 5 bots
+
+Tests use `?processTime=500` query param to speed up the 10s processing timer.
+
+## Project Structure
+
+```
+src/
+├── app/App.tsx                          # App entry
+├── features/orders/
+│   ├── types/index.ts                   # Order, Bot, State, Action types
+│   ├── hooks/useOrderController.ts      # Reducer + timer logic
+│   ├── components/
+│   │   ├── OrderController.tsx          # Root layout
+│   │   ├── OrderButtons.tsx             # New Normal / VIP Order buttons
+│   │   ├── BotControls.tsx              # + Bot / - Bot controls + bot list
+│   │   └── OrderArea.tsx                # Pending / Complete order lists
+│   └── index.ts                         # Barrel export
+├── components/ui/                       # shadcn/ui primitives
+└── lib/utils.ts                         # cn() utility
+```
+
+## Deployment
+
+Configured for Netlify via `netlify.toml` in the repo root. Connects to GitHub for auto-deploy on push.
