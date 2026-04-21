@@ -36,11 +36,11 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
               <Card
                 key={bot.id}
                 size="sm"
-                className={
+                className={`h-10 ${
                   isProcessing
                     ? "border-blue-300 bg-blue-50"
                     : "border-gray-200 bg-gray-50"
-                }
+                }`}
                 data-testid={`bot-${bot.id}`}
               >
                 <CardContent className="flex items-center gap-3 py-0">
