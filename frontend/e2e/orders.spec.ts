@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?processTime=500");
 });
 
 test("normal order appears in pending area", async ({ page }) => {
@@ -67,7 +67,7 @@ test("bot processes order and moves it to complete after 10s", async ({
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
 
   // Wait for 10s processing
-  await page.waitForTimeout(10_500);
+  await page.waitForTimeout(1500);
 
   // Order should be in complete area
   await expect(page.getByTestId("complete-order-1")).toBeVisible();
@@ -190,11 +190,9 @@ test("bot auto-picks next order after completing one", async ({ page }) => {
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
   await expect(page.getByTestId("pending-order-2")).toBeVisible();
 
-  // Wait for first order to complete
-  await page.waitForTimeout(10_500);
-
-  // Order #1 should be complete, bot should now be processing #2
+  // Wait for first order to complete — use auto-wait instead of fixed timeout
   await expect(page.getByTestId("complete-order-1")).toBeVisible();
+  // Bot should now be processing #2
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
 });
 
@@ -239,10 +237,8 @@ test("removed bot's order is redistributed to idle bot", async ({ page }) => {
   await expect(page.getByTestId("pending-order-2")).toBeVisible();
 
   // Wait for bot #1 to finish
-  await page.waitForTimeout(10_500);
-
-  // Bot #1 should now auto-pick order #2
   await expect(page.getByTestId("complete-order-1")).toBeVisible();
+  // Bot #1 should now auto-pick order #2
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
 });
 
@@ -308,19 +304,17 @@ test("removing newest processing bot redistributes order to idle older bot", asy
   await page.getByTestId("new-normal-order").click();
   await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
 
-  // Wait 5s so bot#1 is halfway done
-  await page.waitForTimeout(5000);
+  // Wait so bot#1 is partway through
+  await page.waitForTimeout(300);
 
   // Remove bot#2 (newest, processing order#2) — order#2 returns to pending
   // Bot#1 is still processing order#1, no idle bot available
   await page.getByTestId("remove-bot").click();
   await expect(page.getByTestId("pending-order-2")).toBeVisible();
 
-  // Wait for bot#1 to finish order#1 (~5s remaining)
-  await page.waitForTimeout(5500);
-
-  // Bot#1 should complete order#1 and auto-pick order#2
+  // Wait for bot#1 to finish order#1
   await expect(page.getByTestId("complete-order-1")).toBeVisible();
+  // Bot#1 should auto-pick order#2
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
 });
 

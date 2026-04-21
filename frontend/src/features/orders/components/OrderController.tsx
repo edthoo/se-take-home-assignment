@@ -16,17 +16,19 @@ export function OrderController() {
       </div>
 
       <div className="grid grid-cols-2 grid-rows-2 gap-4 h-[calc(100vh-160px)]">
-        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-3">
+        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 flex flex-col">
+          <h2 className="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-3 shrink-0">
             Orders
           </h2>
-          <OrderButtons
-            onNewNormalOrder={() => addOrder("NORMAL")}
-            onNewVipOrder={() => addOrder("VIP")}
-          />
+          <div className="overflow-y-auto min-h-0 flex-1">
+            <OrderButtons
+              onNewNormalOrder={() => addOrder("NORMAL")}
+              onNewVipOrder={() => addOrder("VIP")}
+            />
+          </div>
         </div>
-        <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold text-purple-700 uppercase tracking-wide mb-3">
+        <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-4 flex flex-col">
+          <h2 className="text-sm font-semibold text-purple-700 uppercase tracking-wide mb-3 shrink-0">
             Bots
           </h2>
           <BotControls

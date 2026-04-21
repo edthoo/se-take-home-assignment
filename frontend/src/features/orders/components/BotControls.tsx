@@ -10,8 +10,8 @@ interface BotControlsProps {
 
 export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
+    <>
+      <div className="flex items-center gap-2 shrink-0">
         <Button size="sm" onClick={onAddBot} data-testid="add-bot">
           + Bot
         </Button>
@@ -29,7 +29,7 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
         </span>
       </div>
       {bots.length > 0 && (
-        <div className="grid gap-2" data-testid="bot-list">
+        <div className="grid gap-2 overflow-y-auto min-h-0 flex-1" data-testid="bot-list">
           {bots.map((bot) => {
             const isProcessing = bot.status === "PROCESSING";
             return (
@@ -63,6 +63,6 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
           })}
         </div>
       )}
-    </div>
+    </>
   );
 }

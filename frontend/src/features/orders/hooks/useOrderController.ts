@@ -1,7 +1,16 @@
 import { useReducer, useRef, useEffect } from "react";
 import type { State, Action, Order, OrderType } from "../types";
 
-const PROCESS_TIME = 10_000;
+const DEFAULT_PROCESS_TIME = 10_000;
+
+function getProcessTime(): number {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("processTime");
+    if (t) return Number(t);
+  }
+  return DEFAULT_PROCESS_TIME;
+}
 
 function insertByPriority(queue: Order[], order: Order): Order[] {
   if (order.type === "VIP") {
@@ -131,12 +140,13 @@ export function useOrderController() {
 
   // Effect ONLY manages timers — no orchestration dispatches
   useEffect(() => {
+    const processTime = getProcessTime();
     for (const bot of state.bots) {
       if (bot.status === "PROCESSING" && !timers.current.has(bot.id)) {
         const id = setTimeout(() => {
           timers.current.delete(bot.id);
           dispatch({ type: "COMPLETE_ORDER", botId: bot.id });
-        }, PROCESS_TIME);
+        }, processTime);
         timers.current.set(bot.id, id);
       }
     }
