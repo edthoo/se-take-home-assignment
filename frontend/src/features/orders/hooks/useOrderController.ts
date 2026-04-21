@@ -67,7 +67,7 @@ export function reducer(state: State, action: Action): State {
       if (newest.order) {
         pendingOrders = insertByPriority(pendingOrders, newest.order);
       }
-      return { ...state, bots: state.bots.slice(0, -1), pendingOrders };
+      return assignIdleBots({ ...state, bots: state.bots.slice(0, -1), pendingOrders });
     }
     case "COMPLETE_ORDER": {
       const bot = state.bots.find((b) => b.id === action.botId);

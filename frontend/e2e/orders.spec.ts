@@ -219,3 +219,78 @@ test("rapid bot removal with multiple processing bots", async ({ page }) => {
   await expect(page.getByTestId("pending-order-1")).toBeVisible();
   await expect(page.getByTestId("pending-order-2")).toBeVisible();
 });
+
+test("removed bot's order is redistributed to idle bot", async ({ page }) => {
+  // Add 2 orders, 2 bots
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("add-bot").click();
+  await page.getByTestId("add-bot").click();
+
+  // Both bots processing
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
+
+  // Remove bot #2 — order #2 goes back to pending
+  await page.getByTestId("remove-bot").click();
+
+  // Bot #1 is still processing order #1, so order #2 should stay in pending
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+
+  // Wait for bot #1 to finish
+  await page.waitForTimeout(10_500);
+
+  // Bot #1 should now auto-pick order #2
+  await expect(page.getByTestId("complete-order-1")).toBeVisible();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
+});
+
+test("removed bot's order immediately picked up by idle bot", async ({ page }) => {
+  // 2 orders, 3 bots — bot#1 processes #1, bot#2 processes #2, bot#3 idle
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("add-bot").click();
+  await page.getByTestId("add-bot").click();
+  await page.getByTestId("add-bot").click();
+
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
+  await expect(page.getByTestId("bot-3")).toContainText("Idle");
+
+  // Remove bot#3 (newest, idle) — no order to return
+  await page.getByTestId("remove-bot").click();
+
+  // Remove bot#2 (newest now, processing order#2) — order#2 returns, bot#1 is busy
+  // assignIdleBots should find no idle bot (bot#1 is processing)
+  await page.getByTestId("remove-bot").click();
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+});
+
+test("idle bot picks up order returned from removed bot", async ({ page }) => {
+  // Setup: 1 order, 2 bots
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("add-bot").click(); // bot #1 picks up order #1
+  await page.getByTestId("add-bot").click(); // bot #2 idle
+
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-2")).toContainText("Idle");
+
+  // Add another order so bot #2 picks it up
+  await page.getByTestId("new-normal-order").click();
+  await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
+
+  // Now add bot #3 (idle)
+  await page.getByTestId("add-bot").click();
+  await expect(page.getByTestId("bot-3")).toContainText("Idle");
+
+  // Remove bot #3 (newest, idle) — no order to return
+  await page.getByTestId("remove-bot").click();
+
+  // Remove bot #2 (newest now, processing order #2) — order #2 returns to pending
+  // But bot #1 is still processing, so order #2 stays in pending
+  await page.getByTestId("remove-bot").click();
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+});
