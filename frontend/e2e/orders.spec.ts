@@ -136,6 +136,22 @@ test("remove bot button disabled when no bots", async ({ page }) => {
   await expect(page.getByTestId("remove-bot")).toBeDisabled();
 });
 
+test("adding multiple orders without bots keeps all in pending", async ({
+  page,
+}) => {
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+
+  const orders = page
+    .getByTestId("pending-area")
+    .locator("[data-testid^='pending-order-']");
+  await expect(orders).toHaveCount(3);
+  await expect(page.getByTestId("pending-order-1")).toBeVisible();
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+  await expect(page.getByTestId("pending-order-3")).toBeVisible();
+});
+
 test("newest bot is removed first", async ({ page }) => {
   await page.getByTestId("add-bot").click();
   await page.getByTestId("add-bot").click();

@@ -53,6 +53,8 @@ export function reducer(state: State, action: Action): State {
     }
     case "BOT_PICK_ORDER": {
       if (state.pendingOrders.length === 0) return state;
+      const bot = state.bots.find((b) => b.id === action.botId);
+      if (!bot || bot.status !== "IDLE") return state;
       const [first, ...rest] = state.pendingOrders;
       return {
         ...state,
@@ -85,6 +87,7 @@ export function reducer(state: State, action: Action): State {
 export function useOrderController() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const scheduledRef = useRef(false);
 
   // Orchestration: assign idle bots to pending orders & start timers
   useEffect(() => {
@@ -99,13 +102,15 @@ export function useOrderController() {
       }
     }
 
-    // Assign idle bots to pending orders
-    if (state.pendingOrders.length > 0) {
-      const idleBot = state.bots.find(
-        (b) => b.status === "IDLE" && !timers.current.has(b.id)
-      );
+    // Assign idle bots to pending orders (debounced via microtask to avoid StrictMode double-fire)
+    if (state.pendingOrders.length > 0 && !scheduledRef.current) {
+      const idleBot = state.bots.find((b) => b.status === "IDLE");
       if (idleBot) {
-        dispatch({ type: "BOT_PICK_ORDER", botId: idleBot.id });
+        scheduledRef.current = true;
+        queueMicrotask(() => {
+          scheduledRef.current = false;
+          dispatch({ type: "BOT_PICK_ORDER", botId: idleBot.id });
+        });
       }
     }
   }, [state]);
@@ -126,7 +131,6 @@ export function useOrderController() {
   }, []);
 
   const removeBot = useCallback(() => {
-    // Clear timer for newest bot before dispatching
     const newest = state.bots[state.bots.length - 1];
     if (newest && timers.current.has(newest.id)) {
       clearTimeout(timers.current.get(newest.id));
