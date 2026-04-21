@@ -5,11 +5,44 @@ const PROCESS_TIME = 10_000;
 
 function insertByPriority(queue: Order[], order: Order): Order[] {
   if (order.type === "VIP") {
+    // Insert among VIPs, sorted by ID to maintain original order
     const lastVipIdx = queue.findLastIndex((o) => o.type === "VIP");
-    const insertAt = lastVipIdx + 1;
-    return [...queue.slice(0, insertAt), order, ...queue.slice(insertAt)];
+    const vipSection = queue.slice(0, lastVipIdx + 1);
+    const rest = queue.slice(lastVipIdx + 1);
+
+    // Find correct position within VIP section by ID
+    const insertIdx = vipSection.findIndex((o) => o.id > order.id);
+    if (insertIdx === -1) {
+      return [...vipSection, order, ...rest];
+    }
+    return [
+      ...vipSection.slice(0, insertIdx),
+      order,
+      ...vipSection.slice(insertIdx),
+      ...rest,
+    ];
   }
-  return [...queue, order];
+
+  // NORMAL: insert among normals, sorted by ID to maintain original order
+  const firstNormalIdx = queue.findIndex((o) => o.type === "NORMAL");
+  if (firstNormalIdx === -1) {
+    // No normals yet, append
+    return [...queue, order];
+  }
+
+  const vipSection = queue.slice(0, firstNormalIdx);
+  const normalSection = queue.slice(firstNormalIdx);
+
+  const insertIdx = normalSection.findIndex((o) => o.id > order.id);
+  if (insertIdx === -1) {
+    return [...vipSection, ...normalSection, order];
+  }
+  return [
+    ...vipSection,
+    ...normalSection.slice(0, insertIdx),
+    order,
+    ...normalSection.slice(insertIdx),
+  ];
 }
 
 function assignIdleBots(state: State): State {

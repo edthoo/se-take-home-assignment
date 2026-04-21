@@ -323,3 +323,55 @@ test("removing newest processing bot redistributes order to idle older bot", asy
   await expect(page.getByTestId("complete-order-1")).toBeVisible();
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
 });
+
+test("returned order maintains correct position among normals", async ({
+  page,
+}) => {
+  // Add orders 1-5 (all normal)
+  for (let i = 0; i < 5; i++) {
+    await page.getByTestId("new-normal-order").click();
+  }
+
+  // Add bot — picks up order #1
+  await page.getByTestId("add-bot").click();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+
+  // Pending should be: 2, 3, 4, 5
+  const pending = page.getByTestId("pending-area").locator("[data-testid^='pending-order-']");
+  await expect(pending).toHaveCount(4);
+
+  // Remove bot — order #1 returns, should go BEFORE order #2
+  await page.getByTestId("remove-bot").click();
+  await expect(pending).toHaveCount(5);
+  await expect(pending.nth(0)).toContainText("Order #1");
+  await expect(pending.nth(1)).toContainText("Order #2");
+  await expect(pending.nth(2)).toContainText("Order #3");
+});
+
+test("returned order stays in correct position when new orders were added", async ({
+  page,
+}) => {
+  // Add orders 1, 2
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+
+  // Add bot — picks up order #1
+  await page.getByTestId("add-bot").click();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+
+  // Add orders 3, 4, 5 while bot is processing
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+
+  // Remove bot — order #1 returns, should be first (lowest ID)
+  await page.getByTestId("remove-bot").click();
+
+  const pending = page.getByTestId("pending-area").locator("[data-testid^='pending-order-']");
+  await expect(pending).toHaveCount(5);
+  await expect(pending.nth(0)).toContainText("Order #1");
+  await expect(pending.nth(1)).toContainText("Order #2");
+  await expect(pending.nth(2)).toContainText("Order #3");
+  await expect(pending.nth(3)).toContainText("Order #4");
+  await expect(pending.nth(4)).toContainText("Order #5");
+});
