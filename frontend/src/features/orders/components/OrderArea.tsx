@@ -1,11 +1,51 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Order } from "../types";
 
 const VIP_BADGE_CLASS = "bg-amber-500 text-white";
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+function useRelativeTime(date: Date): string {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const seconds = Math.floor((now - date.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ${seconds % 60}s ago`;
+}
+
+function formatAbsolute(date: Date): string {
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function PendingTimestamp({ createdAt }: { createdAt: Date }) {
+  const relative = useRelativeTime(createdAt);
+  return (
+    <span className="text-xs text-muted-foreground" title={formatAbsolute(createdAt)}>
+      {relative}
+    </span>
+  );
+}
+
+function CompleteTimestamp({ createdAt, completedAt }: { createdAt: Date; completedAt: Date }) {
+  const duration = Math.round((completedAt.getTime() - createdAt.getTime()) / 1000);
+  return (
+    <span
+      className="text-xs text-muted-foreground"
+      title={`${formatAbsolute(createdAt)} → ${formatAbsolute(completedAt)}`}
+    >
+      Completed in {duration}s
+    </span>
+  );
 }
 
 interface OrderAreaProps {
@@ -43,16 +83,19 @@ export function OrderArea({
           <Card
             key={order.id}
             size="sm"
-            className="bg-white"
+            className={`bg-white border-l-3 ${
+              order.type === "VIP" ? "border-l-amber-500" : "border-l-gray-300"
+            }`}
             data-testid={`${orderTestIdPrefix}-${order.id}`}
           >
             <CardContent className="flex items-center justify-between py-0">
-              <div>
+              <div className="flex flex-col">
                 <span className="font-medium">Order #{order.id}</span>
-                <span className="ml-2 text-xs text-muted-foreground tabular-nums">
-                  {formatTime(order.createdAt)}
-                  {order.completedAt && ` → ${formatTime(order.completedAt)}`}
-                </span>
+                {order.completedAt ? (
+                  <CompleteTimestamp createdAt={order.createdAt} completedAt={order.completedAt} />
+                ) : (
+                  <PendingTimestamp createdAt={order.createdAt} />
+                )}
               </div>
               <Badge
                 variant={order.type === "VIP" ? "default" : "outline"}
