@@ -93,6 +93,8 @@ export function reducer(state: State, action: Action): State {
 export function useOrderController() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   // Effect ONLY manages timers — no orchestration dispatches
   useEffect(() => {
@@ -114,7 +116,8 @@ export function useOrderController() {
   }, []);
 
   const removeBot = () => {
-    const newest = state.bots[state.bots.length - 1];
+    const bots = stateRef.current.bots;
+    const newest = bots[bots.length - 1];
     if (newest && timers.current.has(newest.id)) {
       clearTimeout(timers.current.get(newest.id));
       timers.current.delete(newest.id);

@@ -164,3 +164,58 @@ test("newest bot is removed first", async ({ page }) => {
   await expect(page.getByTestId("bot-1")).toBeVisible();
   await expect(page.getByTestId("bot-2")).not.toBeVisible();
 });
+
+test("multiple bots process orders simultaneously", async ({ page }) => {
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+
+  await page.getByTestId("add-bot").click();
+  await page.getByTestId("add-bot").click();
+
+  // Bot 1 and 2 should each pick up an order
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
+
+  // Order #3 should remain in pending
+  await expect(page.getByTestId("pending-order-3")).toBeVisible();
+});
+
+test("bot auto-picks next order after completing one", async ({ page }) => {
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("add-bot").click();
+
+  // Bot picks up order #1
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+
+  // Wait for first order to complete
+  await page.waitForTimeout(10_500);
+
+  // Order #1 should be complete, bot should now be processing #2
+  await expect(page.getByTestId("complete-order-1")).toBeVisible();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #2");
+});
+
+test("rapid bot removal with multiple processing bots", async ({ page }) => {
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("add-bot").click();
+  await page.getByTestId("add-bot").click();
+
+  // Both bots processing
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-2")).toContainText("Processing Order #2");
+
+  // Rapidly remove both bots
+  await page.getByTestId("remove-bot").click();
+  await page.getByTestId("remove-bot").click();
+
+  // No bots should remain
+  await expect(page.getByTestId("bot-list")).not.toBeVisible();
+
+  // Both orders should be back in pending
+  await expect(page.getByTestId("pending-order-1")).toBeVisible();
+  await expect(page.getByTestId("pending-order-2")).toBeVisible();
+});
