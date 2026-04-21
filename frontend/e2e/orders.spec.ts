@@ -375,3 +375,52 @@ test("returned order stays in correct position when new orders were added", asyn
   await expect(pending.nth(3)).toContainText("Order #4");
   await expect(pending.nth(4)).toContainText("Order #5");
 });
+
+test("returned VIP order maintains correct position among VIPs", async ({
+  page,
+}) => {
+  // Add VIP#1, VIP#2, VIP#3
+  await page.getByTestId("new-vip-order").click();
+  await page.getByTestId("new-vip-order").click();
+  await page.getByTestId("new-vip-order").click();
+
+  // Add bot — picks up VIP#1
+  await page.getByTestId("add-bot").click();
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+
+  // Pending: VIP#2, VIP#3
+  const pending = page.getByTestId("pending-area").locator("[data-testid^='pending-order-']");
+  await expect(pending).toHaveCount(2);
+
+  // Remove bot — VIP#1 returns, should be first
+  await page.getByTestId("remove-bot").click();
+  await expect(pending).toHaveCount(3);
+  await expect(pending.nth(0)).toContainText("Order #1");
+  await expect(pending.nth(1)).toContainText("Order #2");
+  await expect(pending.nth(2)).toContainText("Order #3");
+});
+
+test("returned VIP order placed before normals", async ({ page }) => {
+  // Add Normal#1, Normal#2
+  await page.getByTestId("new-normal-order").click();
+  await page.getByTestId("new-normal-order").click();
+
+  // Add VIP#3, bot picks it up
+  await page.getByTestId("new-vip-order").click();
+  await page.getByTestId("add-bot").click();
+
+  // Bot should pick up VIP#3 (first in queue after priority insert)
+  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #3");
+
+  // Pending: Normal#1, Normal#2
+  const pending = page.getByTestId("pending-area").locator("[data-testid^='pending-order-']");
+  await expect(pending).toHaveCount(2);
+
+  // Remove bot — VIP#3 returns, should go before normals
+  await page.getByTestId("remove-bot").click();
+  await expect(pending).toHaveCount(3);
+  await expect(pending.nth(0)).toContainText("Order #3");
+  await expect(pending.nth(0)).toContainText("VIP");
+  await expect(pending.nth(1)).toContainText("Order #1");
+  await expect(pending.nth(2)).toContainText("Order #2");
+});
