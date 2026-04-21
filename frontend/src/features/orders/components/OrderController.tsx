@@ -7,7 +7,7 @@ export function OrderController() {
   const { state, addOrder, addBot, removeBot } = useOrderController();
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-6 space-y-6 h-screen flex flex-col">
+    <div className="mx-auto w-full max-w-3xl p-6 space-y-4 h-screen overflow-hidden">
       <div className="rounded-xl bg-red-600 px-6 py-4 text-white">
         <h1 className="text-2xl font-bold tracking-tight">
           🍔 McDonald's Order Controller
@@ -15,9 +15,9 @@ export function OrderController() {
         <p className="text-sm text-red-100">Automated cooking bot management</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="grid grid-cols-2 grid-rows-2 gap-4 h-[calc(100vh-160px)]">
+        <div className="rounded-lg border p-4 overflow-y-auto">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             Orders
           </h2>
           <OrderButtons
@@ -25,8 +25,8 @@ export function OrderController() {
             onNewVipOrder={() => addOrder("VIP")}
           />
         </div>
-        <div className="rounded-lg border p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="rounded-lg border p-4 overflow-y-auto">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             Bots
           </h2>
           <BotControls
@@ -35,9 +35,6 @@ export function OrderController() {
             onRemoveBot={removeBot}
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 min-h-0 flex-1">
         <OrderArea
           title="PENDING"
           orders={state.pendingOrders}
