@@ -63,8 +63,8 @@ test("bot processes order and moves it to complete after 10s", async ({
   // Order should leave pending (bot picks it up)
   await expect(page.getByTestId("pending-area")).not.toContainText("Order #1");
 
-  // Bot should show processing
-  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  // Bot should show it has the order
+  await expect(page.getByTestId("bot-1")).toContainText("Order #1");
 
   // Wait for 10s processing
   await page.waitForTimeout(10_500);
@@ -83,7 +83,7 @@ test("idle bot picks up new order immediately", async ({ page }) => {
   await expect(page.getByTestId("bot-1")).toContainText("Idle");
 
   await page.getByTestId("new-normal-order").click();
-  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-1")).toContainText("Order #1");
 });
 
 test("removing bot returns its order to pending", async ({ page }) => {
@@ -91,7 +91,7 @@ test("removing bot returns its order to pending", async ({ page }) => {
   await page.getByTestId("add-bot").click();
 
   // Bot picks up order
-  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-1")).toContainText("Order #1");
 
   // Remove bot
   await page.getByTestId("remove-bot").click();
@@ -111,7 +111,7 @@ test("removing bot returns order in correct priority position", async ({
   await page.getByTestId("add-bot").click();
 
   // Bot picks up order #1
-  await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
+  await expect(page.getByTestId("bot-1")).toContainText("Order #1");
 
   // Add VIP order
   await page.getByTestId("new-vip-order").click();

@@ -12,10 +12,11 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Button onClick={onAddBot} data-testid="add-bot">
+        <Button size="sm" onClick={onAddBot} data-testid="add-bot">
           + Bot
         </Button>
         <Button
+          size="sm"
           variant="outline"
           onClick={onRemoveBot}
           disabled={bots.length === 0}
@@ -23,12 +24,12 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
         >
           - Bot
         </Button>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground tabular-nums">
           {bots.length} bot{bots.length !== 1 && "s"}
         </span>
       </div>
       {bots.length > 0 && (
-        <div className="flex flex-wrap gap-2" data-testid="bot-list">
+        <div className="flex flex-wrap gap-1.5" data-testid="bot-list">
           {bots.map((bot) => (
             <Badge
               key={bot.id}
@@ -36,9 +37,7 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
               data-testid={`bot-${bot.id}`}
             >
               Bot #{bot.id}:{" "}
-              {bot.order
-                ? `Processing Order #${bot.order.id}`
-                : "Idle"}
+              {bot.order ? `Order #${bot.order.id}` : "Idle"}
             </Badge>
           ))}
         </div>
