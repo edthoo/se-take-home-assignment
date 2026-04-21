@@ -1,4 +1,4 @@
-import { useReducer, useRef, useEffect, useCallback } from "react";
+import { useReducer, useRef, useEffect } from "react";
 import type { State, Action, Order, OrderType } from "../types";
 
 const PROCESS_TIME = 10_000;
@@ -10,6 +10,23 @@ function insertByPriority(queue: Order[], order: Order): Order[] {
     return [...queue.slice(0, insertAt), order, ...queue.slice(insertAt)];
   }
   return [...queue, order];
+}
+
+function assignIdleBots(state: State): State {
+  let { pendingOrders, bots } = state;
+  let changed = false;
+
+  bots = bots.map((bot) => {
+    if (bot.status === "IDLE" && pendingOrders.length > 0) {
+      const [first, ...rest] = pendingOrders;
+      pendingOrders = rest;
+      changed = true;
+      return { ...bot, status: "PROCESSING" as const, order: first };
+    }
+    return bot;
+  });
+
+  return changed ? { ...state, pendingOrders, bots } : state;
 }
 
 export const initialState: State = {
@@ -24,19 +41,19 @@ export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "ADD_ORDER": {
       const order: Order = { id: state.nextOrderId, type: action.orderType };
-      return {
+      return assignIdleBots({
         ...state,
         pendingOrders: insertByPriority(state.pendingOrders, order),
         nextOrderId: state.nextOrderId + 1,
-      };
+      });
     }
     case "ADD_BOT": {
       const bot = { id: state.nextBotId, status: "IDLE" as const, order: null };
-      return {
+      return assignIdleBots({
         ...state,
         bots: [...state.bots, bot],
         nextBotId: state.nextBotId + 1,
-      };
+      });
     }
     case "REMOVE_BOT": {
       if (state.bots.length === 0) return state;
@@ -45,31 +62,12 @@ export function reducer(state: State, action: Action): State {
       if (newest.order) {
         pendingOrders = insertByPriority(pendingOrders, newest.order);
       }
-      return {
-        ...state,
-        bots: state.bots.slice(0, -1),
-        pendingOrders,
-      };
-    }
-    case "BOT_PICK_ORDER": {
-      if (state.pendingOrders.length === 0) return state;
-      const bot = state.bots.find((b) => b.id === action.botId);
-      if (!bot || bot.status !== "IDLE") return state;
-      const [first, ...rest] = state.pendingOrders;
-      return {
-        ...state,
-        pendingOrders: rest,
-        bots: state.bots.map((b) =>
-          b.id === action.botId
-            ? { ...b, status: "PROCESSING" as const, order: first }
-            : b
-        ),
-      };
+      return { ...state, bots: state.bots.slice(0, -1), pendingOrders };
     }
     case "COMPLETE_ORDER": {
       const bot = state.bots.find((b) => b.id === action.botId);
       if (!bot?.order) return state;
-      return {
+      return assignIdleBots({
         ...state,
         completeOrders: [...state.completeOrders, bot.order],
         bots: state.bots.map((b) =>
@@ -77,7 +75,7 @@ export function reducer(state: State, action: Action): State {
             ? { ...b, status: "IDLE" as const, order: null }
             : b
         ),
-      };
+      });
     }
     default:
       return state;
@@ -87,11 +85,9 @@ export function reducer(state: State, action: Action): State {
 export function useOrderController() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-  const scheduledRef = useRef(false);
 
-  // Orchestration: assign idle bots to pending orders & start timers
+  // Effect ONLY manages timers — no orchestration dispatches
   useEffect(() => {
-    // Start timers for PROCESSING bots that don't have one yet
     for (const bot of state.bots) {
       if (bot.status === "PROCESSING" && !timers.current.has(bot.id)) {
         const id = setTimeout(() => {
@@ -101,43 +97,28 @@ export function useOrderController() {
         timers.current.set(bot.id, id);
       }
     }
+  }, [state.bots]);
 
-    // Assign idle bots to pending orders (debounced via microtask to avoid StrictMode double-fire)
-    if (state.pendingOrders.length > 0 && !scheduledRef.current) {
-      const idleBot = state.bots.find((b) => b.status === "IDLE");
-      if (idleBot) {
-        scheduledRef.current = true;
-        queueMicrotask(() => {
-          scheduledRef.current = false;
-          dispatch({ type: "BOT_PICK_ORDER", botId: idleBot.id });
-        });
-      }
-    }
-  }, [state]);
-
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       timers.current.forEach((t) => clearTimeout(t));
     };
   }, []);
 
-  const addOrder = useCallback((orderType: OrderType) => {
-    dispatch({ type: "ADD_ORDER", orderType });
-  }, []);
-
-  const addBot = useCallback(() => {
-    dispatch({ type: "ADD_BOT" });
-  }, []);
-
-  const removeBot = useCallback(() => {
+  const removeBot = () => {
     const newest = state.bots[state.bots.length - 1];
     if (newest && timers.current.has(newest.id)) {
       clearTimeout(timers.current.get(newest.id));
       timers.current.delete(newest.id);
     }
     dispatch({ type: "REMOVE_BOT" });
-  }, [state.bots]);
+  };
 
-  return { state, addOrder, addBot, removeBot };
+  return {
+    state,
+    addOrder: (orderType: OrderType) =>
+      dispatch({ type: "ADD_ORDER", orderType }),
+    addBot: () => dispatch({ type: "ADD_BOT" }),
+    removeBot,
+  };
 }

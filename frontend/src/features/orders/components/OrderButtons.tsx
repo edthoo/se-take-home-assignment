@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 
+const VIP_BUTTON_CLASS = "bg-amber-500 text-white hover:bg-amber-600";
+
 interface OrderButtonsProps {
   onNewNormalOrder: () => void;
   onNewVipOrder: () => void;
@@ -16,7 +18,7 @@ export function OrderButtons({
       </Button>
       <Button
         onClick={onNewVipOrder}
-        className="bg-amber-500 text-white hover:bg-amber-600"
+        className={VIP_BUTTON_CLASS}
         data-testid="new-vip-order"
       >
         New VIP Order

@@ -1,8 +1,7 @@
 import { useOrderController } from "../hooks/useOrderController";
 import { OrderButtons } from "./OrderButtons";
 import { BotControls } from "./BotControls";
-import { PendingArea } from "./PendingArea";
-import { CompleteArea } from "./CompleteArea";
+import { OrderArea } from "./OrderArea";
 
 export function OrderController() {
   const { state, addOrder, addBot, removeBot } = useOrderController();
@@ -24,8 +23,18 @@ export function OrderController() {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <PendingArea orders={state.pendingOrders} />
-        <CompleteArea orders={state.completeOrders} />
+        <OrderArea
+          title="PENDING"
+          orders={state.pendingOrders}
+          testId="pending-area"
+          orderTestIdPrefix="pending-order"
+        />
+        <OrderArea
+          title="COMPLETE"
+          orders={state.completeOrders}
+          testId="complete-area"
+          orderTestIdPrefix="complete-order"
+        />
       </div>
     </div>
   );
