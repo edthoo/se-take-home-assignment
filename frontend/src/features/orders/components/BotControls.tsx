@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { Bot } from "../types";
 
 interface BotControlsProps {
@@ -11,7 +12,7 @@ interface BotControlsProps {
 export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
   return (
     <>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 mb-2">
         <Button size="sm" onClick={onAddBot} data-testid="add-bot">
           + Bot
         </Button>
@@ -29,27 +30,25 @@ export function BotControls({ bots, onAddBot, onRemoveBot }: BotControlsProps) {
         </span>
       </div>
       {bots.length > 0 && (
-        <div className="grid gap-2 overflow-y-auto min-h-0 flex-1" data-testid="bot-list">
+        <div className="space-y-2 overflow-y-auto min-h-0 flex-1" data-testid="bot-list">
           {bots.map((bot) => {
             const isProcessing = bot.status === "PROCESSING";
             return (
               <Card
                 key={bot.id}
                 size="sm"
-                className={`h-10 ${
-                  isProcessing
-                    ? "border-blue-300 bg-blue-50"
-                    : "border-gray-200 bg-gray-50"
-                }`}
+                className={cn(
+                  "h-10",
+                  isProcessing ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-gray-50"
+                )}
                 data-testid={`bot-${bot.id}`}
               >
                 <CardContent className="flex items-center gap-3 py-0">
                   <span
-                    className={`inline-block size-2 rounded-full ${
-                      isProcessing
-                        ? "bg-blue-500 animate-pulse"
-                        : "bg-gray-400"
-                    }`}
+                    className={cn(
+                      "inline-block size-2 rounded-full",
+                      isProcessing ? "bg-blue-500 animate-pulse" : "bg-gray-400"
+                    )}
                   />
                   <span className="font-medium text-sm">Bot #{bot.id}</span>
                   <span className="text-xs text-muted-foreground">

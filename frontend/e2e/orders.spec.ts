@@ -54,7 +54,7 @@ test("order numbers are unique and increasing", async ({ page }) => {
   await expect(page.getByTestId("pending-area")).toContainText("Order #3");
 });
 
-test("bot processes order and moves it to complete after 10s", async ({
+test("bot processes order and moves it to complete", async ({
   page,
 }) => {
   await page.getByTestId("new-normal-order").click();
@@ -66,10 +66,7 @@ test("bot processes order and moves it to complete after 10s", async ({
   // Bot should show it has the order
   await expect(page.getByTestId("bot-1")).toContainText("Processing Order #1");
 
-  // Wait for 10s processing
-  await page.waitForTimeout(1500);
-
-  // Order should be in complete area
+  // Order should be in complete area after processing
   await expect(page.getByTestId("complete-order-1")).toBeVisible();
 });
 

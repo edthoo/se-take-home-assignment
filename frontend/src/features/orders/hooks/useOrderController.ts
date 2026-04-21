@@ -6,52 +6,19 @@ const DEFAULT_PROCESS_TIME = 10_000;
 function getProcessTime(): number {
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get("processTime");
-    if (t) return Number(t);
+    const t = Number(params.get("processTime"));
+    if (t > 0) return t;
   }
   return DEFAULT_PROCESS_TIME;
 }
 
 function insertByPriority(queue: Order[], order: Order): Order[] {
-  if (order.type === "VIP") {
-    // Insert among VIPs, sorted by ID to maintain original order
-    const lastVipIdx = queue.findLastIndex((o) => o.type === "VIP");
-    const vipSection = queue.slice(0, lastVipIdx + 1);
-    const rest = queue.slice(lastVipIdx + 1);
-
-    // Find correct position within VIP section by ID
-    const insertIdx = vipSection.findIndex((o) => o.id > order.id);
-    if (insertIdx === -1) {
-      return [...vipSection, order, ...rest];
-    }
-    return [
-      ...vipSection.slice(0, insertIdx),
-      order,
-      ...vipSection.slice(insertIdx),
-      ...rest,
-    ];
-  }
-
-  // NORMAL: insert among normals, sorted by ID to maintain original order
-  const firstNormalIdx = queue.findIndex((o) => o.type === "NORMAL");
-  if (firstNormalIdx === -1) {
-    // No normals yet, append
-    return [...queue, order];
-  }
-
-  const vipSection = queue.slice(0, firstNormalIdx);
-  const normalSection = queue.slice(firstNormalIdx);
-
-  const insertIdx = normalSection.findIndex((o) => o.id > order.id);
-  if (insertIdx === -1) {
-    return [...vipSection, ...normalSection, order];
-  }
-  return [
-    ...vipSection,
-    ...normalSection.slice(0, insertIdx),
-    order,
-    ...normalSection.slice(insertIdx),
-  ];
+  const result = [...queue];
+  const insertIdx = result.findIndex((o) =>
+    o.type === order.type ? o.id > order.id : order.type === "VIP"
+  );
+  result.splice(insertIdx === -1 ? result.length : insertIdx, 0, order);
+  return result;
 }
 
 function assignIdleBots(state: State): State {
@@ -85,7 +52,7 @@ export function reducer(state: State, action: Action): State {
       const order: Order = {
         id: state.nextOrderId,
         type: action.orderType,
-        createdAt: new Date(),
+        createdAt: action.timestamp,
         completedAt: null,
       };
       return assignIdleBots({
@@ -118,7 +85,7 @@ export function reducer(state: State, action: Action): State {
         ...state,
         completeOrders: [
           ...state.completeOrders,
-          { ...bot.order, completedAt: new Date() },
+          { ...bot.order, completedAt: action.timestamp },
         ],
         bots: state.bots.map((b) =>
           b.id === action.botId
@@ -136,17 +103,16 @@ export function useOrderController() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const stateRef = useRef(state);
+  const processTime = useRef(getProcessTime());
   stateRef.current = state;
 
-  // Effect ONLY manages timers — no orchestration dispatches
   useEffect(() => {
-    const processTime = getProcessTime();
     for (const bot of state.bots) {
       if (bot.status === "PROCESSING" && !timers.current.has(bot.id)) {
         const id = setTimeout(() => {
           timers.current.delete(bot.id);
-          dispatch({ type: "COMPLETE_ORDER", botId: bot.id });
-        }, processTime);
+          dispatch({ type: "COMPLETE_ORDER", botId: bot.id, timestamp: new Date() });
+        }, processTime.current);
         timers.current.set(bot.id, id);
       }
     }
@@ -171,7 +137,7 @@ export function useOrderController() {
   return {
     state,
     addOrder: (orderType: OrderType) =>
-      dispatch({ type: "ADD_ORDER", orderType }),
+      dispatch({ type: "ADD_ORDER", orderType, timestamp: new Date() }),
     addBot: () => dispatch({ type: "ADD_BOT" }),
     removeBot,
   };

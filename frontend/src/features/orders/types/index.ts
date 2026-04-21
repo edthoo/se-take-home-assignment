@@ -22,7 +22,7 @@ export interface State {
 }
 
 export type Action =
-  | { type: "ADD_ORDER"; orderType: OrderType }
+  | { type: "ADD_ORDER"; orderType: OrderType; timestamp: Date }
   | { type: "ADD_BOT" }
   | { type: "REMOVE_BOT" }
-  | { type: "COMPLETE_ORDER"; botId: number };
+  | { type: "COMPLETE_ORDER"; botId: number; timestamp: Date };
