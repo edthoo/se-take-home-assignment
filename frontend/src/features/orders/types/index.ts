@@ -18,7 +18,6 @@ export interface State {
   completeOrders: Order[];
   bots: Bot[];
   nextOrderId: number;
-  nextBotId: number;
 }
 
 export type Action =

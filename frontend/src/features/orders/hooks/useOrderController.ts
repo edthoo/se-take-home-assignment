@@ -43,7 +43,6 @@ export const initialState: State = {
   completeOrders: [],
   bots: [],
   nextOrderId: 1,
-  nextBotId: 1,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -62,11 +61,13 @@ export function reducer(state: State, action: Action): State {
       });
     }
     case "ADD_BOT": {
-      const bot = { id: state.nextBotId, status: "IDLE" as const, order: null };
+      const usedIds = new Set(state.bots.map((b) => b.id));
+      let newId = 1;
+      while (usedIds.has(newId)) newId++;
+      const bot = { id: newId, status: "IDLE" as const, order: null };
       return assignIdleBots({
         ...state,
         bots: [...state.bots, bot],
-        nextBotId: state.nextBotId + 1,
       });
     }
     case "REMOVE_BOT": {
